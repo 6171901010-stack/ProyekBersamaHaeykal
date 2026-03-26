@@ -1,11 +1,68 @@
-<html>
+<!DOCTYPE html>
+<html lang="id">
 <head>
-<title>Page Title</title>
+    <meta charset="UTF-8">
+    <title>Kalkulator Sederhana</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            margin-top: 50px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        #hasil {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
-<h1>PROYEK BERSAMA</h1>
-<p>GPS.</p>
+    <h2>Kalkulator Sederhana</h2>
+
+    <input type="number" id="angka1" placeholder="Angka pertama">
+    <input type="number" id="angka2" placeholder="Angka kedua">
+    <br>
+
+    <button onclick="hitung('+')">+</button>
+    <button onclick="hitung('-')">-</button>
+    <button onclick="hitung('*')">×</button>
+    <button onclick="hitung('/')">÷</button>
+
+    <div id="hasil"></div>
+
+    <script>
+        function hitung(operator) {
+            let a = parseFloat(document.getElementById("angka1").value);
+            let b = parseFloat(document.getElementById("angka2").value);
+            let hasil;
+
+            if (isNaN(a) || isNaN(b)) {
+                document.getElementById("hasil").innerHTML = "Masukkan angka yang valid!";
+                return;
+            }
+
+            if (operator === '+') {
+                hasil = a + b;
+            } else if (operator === '-') {
+                hasil = a - b;
+            } else if (operator === '*') {
+                hasil = a * b;
+            } else if (operator === '/') {
+                if (b === 0) {
+                    document.getElementById("hasil").innerHTML = "Tidak bisa dibagi 0!";
+                    return;
+                }
+                hasil = a / b;
+            }
+
+            document.getElementById("hasil").innerHTML = "Hasil: " + hasil;
+        }
+    </script>
 
 </body>
 </html>
