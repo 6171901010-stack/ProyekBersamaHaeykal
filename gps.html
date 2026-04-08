@@ -1,58 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+    <meta charset="UTF-8">
     <title>GPS Distance Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #007bff;
+        }
+
+        .info {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .loading {
+            color: orange;
+        }
+
+        .result {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h2>Jarak dari Lokasi Saya</h2>
+
+<div class="card">
+    <h2>📍 GPS Tracker</h2>
 
     <button onclick="getLocation()">Cek Lokasi Saya</button>
 
-    <p id="lokasi"></p>
-    <p id="jarak"></p>
+    <div class="info" id="status"></div>
+    <div class="info" id="lokasi"></div>
+    <div class="info result" id="jarak"></div>
+</div>
 
-    <script>
-        // Koordinat tujuan (contoh: Bandung)
-        const tujuanLat = -6.914744;
-        const tujuanLon = 107.609810;
+<script>
+    // Koordinat tujuan (contoh bebas, bisa kamu ganti)
+    const tujuanLat = -6.914744;
+    const tujuanLon = 107.609810;
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition);
-            } else {
-                alert("Browser tidak mendukung GPS");
-            }
+    function getLocation() {
+        document.getElementById("status").innerHTML = "⏳ Mengambil lokasi...";
+        document.getElementById("status").className = "info loading";
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+            alert("Browser tidak mendukung GPS");
         }
+    }
 
-        function showPosition(position) {
-            let lat = position.coords.latitude;
-            let lon = position.coords.longitude;
+    function showPosition(position) {
+        let lat = position.coords.latitude;
+        let lon = position.coords.longitude;
 
-            document.getElementById("lokasi").innerHTML =
-                "Latitude: " + lat + "<br>Longitude: " + lon;
+        document.getElementById("status").innerHTML = "✅ Lokasi berhasil didapat!";
+        document.getElementById("status").className = "info result";
 
-            let jarak = hitungJarak(lat, lon, tujuanLat, tujuanLon);
+        document.getElementById("lokasi").innerHTML =
+            "📌 Latitude: " + lat.toFixed(6) + "<br>📌 Longitude: " + lon.toFixed(6);
 
-            document.getElementById("jarak").innerHTML =
-                "Jarak ke tujuan: " + jarak.toFixed(2) + " km";
-        }
+        let jarak = hitungJarak(lat, lon, tujuanLat, tujuanLon);
 
-        // Rumus Haversine
-        function hitungJarak(lat1, lon1, lat2, lon2) {
-            const R = 6371; // radius bumi (km)
-            let dLat = (lat2 - lat1) * Math.PI / 180;
-            let dLon = (lon2 - lon1) * Math.PI / 180;
+        document.getElementById("jarak").innerHTML =
+            "📏 Jarak ke tujuan: " + jarak.toFixed(2) + " km";
+    }
 
-            let a =
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) *
-                Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
+    function showError(error) {
+        document.getElementById("status").innerHTML = "❌ Gagal mengambil lokasi!";
+    }
 
-            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    function hitungJarak(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        let dLat = (lat2 - lat1) * Math.PI / 180;
+        let dLon = (lon2 - lon1) * Math.PI / 180;
 
-            return R * c;
-        }
-    </script>
+        let a =
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) *
+            Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+
+        let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c;
+    }
+</script>
+
 </body>
 </html>
