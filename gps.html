@@ -1,87 +1,69 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>GPS Distance Tracker</title>
+    <title>GPS Tracker Map</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            height: 100vh;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: Arial;
         }
 
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            width: 320px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        h2 {
-            margin-bottom: 20px;
-        }
-
-        button {
-            background: #4facfe;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #007bff;
+        #map {
+            height: 100vh;
         }
 
         .info {
-            margin-top: 20px;
-            font-size: 14px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            width: 250px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        .loading {
-            color: orange;
-        }
-
-        .result {
-            color: green;
-            font-weight: bold;
+        button {
+            padding: 10px;
+            width: 100%;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>📍 GPS Tracker</h2>
-
-    <button onclick="getLocation()">Cek Lokasi Saya</button>
-
-    <div class="info" id="status"></div>
-    <div class="info" id="lokasi"></div>
-    <div class="info result" id="jarak"></div>
+<div class="info">
+    <h3>📍 GPS Tracker</h3>
+    <button onclick="getLocation()">Ambil Lokasi</button>
+    <div id="output"></div>
 </div>
 
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script>
-    // Koordinat tujuan (contoh bebas, bisa kamu ganti)
-    const tujuanLat = -6.914744;
-    const tujuanLon = 107.609810;
+    let map = L.map('map').setView([-6.9, 107.6], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map'
+    }).addTo(map);
 
     function getLocation() {
-        document.getElementById("status").innerHTML = "⏳ Mengambil lokasi...";
-        document.getElementById("status").className = "info loading";
-
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPosition, showError);
+            navigator.geolocation.getCurrentPosition(showPosition);
         } else {
-            alert("Browser tidak mendukung GPS");
+            alert("GPS tidak didukung");
         }
     }
 
@@ -89,20 +71,32 @@
         let lat = position.coords.latitude;
         let lon = position.coords.longitude;
 
-        document.getElementById("status").innerHTML = "✅ Lokasi berhasil didapat!";
-        document.getElementById("status").className = "info result";
+        map.setView([lat, lon], 15);
 
-        document.getElementById("lokasi").innerHTML =
-            "📌 Latitude: " + lat.toFixed(6) + "<br>📌 Longitude: " + lon.toFixed(6);
+        // Marker kamu
+        L.marker([lat, lon]).addTo(map)
+            .bindPopup("📍 Lokasi Saya")
+            .openPopup();
 
-        let jarak = hitungJarak(lat, lon, tujuanLat, tujuanLon);
+        // Buat 3 titik random sekitar (radius kecil)
+        let titik = [
+            [lat + 0.002, lon + 0.002],
+            [lat - 0.002, lon + 0.001],
+            [lat + 0.001, lon - 0.002]
+        ];
 
-        document.getElementById("jarak").innerHTML =
-            "📏 Jarak ke tujuan: " + jarak.toFixed(2) + " km";
-    }
+        let hasil = "<b>Jarak ke titik:</b><br>";
 
-    function showError(error) {
-        document.getElementById("status").innerHTML = "❌ Gagal mengambil lokasi!";
+        titik.forEach((t, index) => {
+            L.marker(t).addTo(map)
+                .bindPopup("Titik " + (index + 1));
+
+            let jarak = hitungJarak(lat, lon, t[0], t[1]);
+
+            hasil += "Titik " + (index + 1) + ": " + jarak.toFixed(2) + " km<br>";
+        });
+
+        document.getElementById("output").innerHTML = hasil;
     }
 
     function hitungJarak(lat1, lon1, lat2, lon2) {
