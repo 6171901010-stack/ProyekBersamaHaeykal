@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trilaterasi GPS Sederhana</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+        }
+
+        canvas {
+            border: 1px solid black;
+            background: #f5f5f5;
+        }
+
+        input {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Simulasi Trilaterasi</h2>
+
+X: <input type="number" id="x" value="100">
+Y: <input type="number" id="y" value="100">
+<button onclick="hitung()">Hitung</button>
+
+<p id="hasil"></p>
+
+<canvas id="canvas" width="400" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+// 3 titik referensi (anchor)
+const A = {x: 50, y: 80};
+const B = {x: 300, y: 100};
+const C = {x: 200, y: 300};
+
+function jarak(p1, p2) {
+    return Math.sqrt(
+        Math.pow(p1.x - p2.x, 2) +
+        Math.pow(p1.y - p2.y, 2)
+    );
+}
+
+function gambarTitik(p, warna) {
+    ctx.fillStyle = warna;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI);
+    ctx.fill();
+}
+
+function gambarLingkaran(p, r, warna) {
+    ctx.strokeStyle = warna;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, 2 * Math.PI);
+    ctx.stroke();
+}
+
+function hitung() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let x = parseFloat(document.getElementById("x").value);
+    let y = parseFloat(document.getElementById("y").value);
+
+    let P = {x: x, y: y};
+
+    // hitung jarak ke 3 titik
+    let r1 = jarak(P, A);
+    let r2 = jarak(P, B);
+    let r3 = jarak(P, C);
+
+    document.getElementById("hasil").innerHTML =
+        `r1=${r1.toFixed(2)}, r2=${r2.toFixed(2)}, r3=${r3.toFixed(2)}`;
+
+    // gambar anchor
+    gambarTitik(A, "red");
+    gambarTitik(B, "green");
+    gambarTitik(C, "blue");
+
+    // gambar lingkaran
+    gambarLingkaran(A, r1, "red");
+    gambarLingkaran(B, r2, "green");
+    gambarLingkaran(C, r3, "blue");
+
+    // gambar titik target
+    gambarTitik(P, "black");
+}
+</script>
+
+</body>
+</html>
