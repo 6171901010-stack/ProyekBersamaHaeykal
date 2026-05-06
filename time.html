@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Trilaterasi + Waktu</title>
+    <title>Trilaterasi + Waktu Tempuh</title>
     <style>
         body {
             font-family: Arial;
@@ -40,6 +40,7 @@
         .hasil {
             margin-top: 10px;
             font-weight: bold;
+            text-align: left;
         }
 
         .waktu {
@@ -51,13 +52,15 @@
 <body>
 
 <div class="box">
-    <h2>📍 Trilaterasi + Waktu</h2>
+    <h2>📍 Trilaterasi + Waktu Tempuh</h2>
 
     <div class="waktu">🕒 Waktu Sekarang: <span id="jam"></span></div>
 
     X: <input type="number" id="x" value="150">
-    Y: <input type="number" id="y" value="150">
-    <br>
+    Y: <input type="number" id="y" value="150"><br>
+
+    Kecepatan (m/s): <input type="number" id="v" value="1"><br>
+
     <button onclick="hitung()">Hitung</button>
 
     <div class="hasil" id="hasil"></div>
@@ -75,14 +78,14 @@ const A = {x: 50, y: 80};
 const B = {x: 300, y: 100};
 const C = {x: 200, y: 300};
 
-// 🔹 JAM REAL-TIME
+// jam real-time
 function updateJam() {
     let now = new Date();
     document.getElementById("jam").innerHTML = now.toLocaleTimeString();
 }
 setInterval(updateJam, 1000);
 
-// 🔹 RUMUS JARAK
+// rumus jarak
 function jarak(p1, p2) {
     return Math.sqrt(
         Math.pow(p1.x - p2.x, 2) +
@@ -90,7 +93,7 @@ function jarak(p1, p2) {
     );
 }
 
-// 🔹 GAMBAR TITIK
+// gambar titik
 function gambarTitik(p, warna, label) {
     ctx.fillStyle = warna;
     ctx.beginPath();
@@ -99,7 +102,7 @@ function gambarTitik(p, warna, label) {
     ctx.fillText(label, p.x + 8, p.y);
 }
 
-// 🔹 GAMBAR LINGKARAN
+// gambar lingkaran
 function gambarLingkaran(p, r, warna) {
     ctx.strokeStyle = warna;
     ctx.beginPath();
@@ -107,12 +110,9 @@ function gambarLingkaran(p, r, warna) {
     ctx.stroke();
 }
 
-// 🔹 FUNGSI UTAMA
+// fungsi utama
 function hitung() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // ⏱ mulai waktu
-    let start = performance.now();
 
     let now = new Date();
     document.getElementById("waktuKlik").innerHTML =
@@ -120,6 +120,7 @@ function hitung() {
 
     let x = parseFloat(document.getElementById("x").value);
     let y = parseFloat(document.getElementById("y").value);
+    let v = parseFloat(document.getElementById("v").value);
 
     let P = {x: x, y: y};
 
@@ -127,15 +128,33 @@ function hitung() {
     let r2 = jarak(P, B);
     let r3 = jarak(P, C);
 
-    // ⏱ selesai waktu
-    let end = performance.now();
-    let durasi = (end - start) / 1000;
+    // ubah ke meter (simulasi)
+    let s1 = r1 * 1000;
+    let s2 = r2 * 1000;
+    let s3 = r3 * 1000;
+
+    // waktu (detik)
+    let t1 = s1 / v;
+    let t2 = s2 / v;
+    let t3 = s3 / v;
+
+    // menit
+    let m1 = t1 / 60;
+    let m2 = t2 / 60;
+    let m3 = t3 / 60;
 
     document.getElementById("hasil").innerHTML =
-        `📏 r1 (ke A) = ${r1.toFixed(2)} <br>
-         📏 r2 (ke B) = ${r2.toFixed(2)} <br>
-         📏 r3 (ke C) = ${r3.toFixed(2)} <br><br>
-         ⏱ Waktu proses: ${durasi.toFixed(6)} detik`;
+        `🔴 Titik A <br>
+         📏 Jarak: ${r1.toFixed(2)} <br>
+         ⏱ Waktu: ${t1.toFixed(2)} detik (${m1.toFixed(2)} menit)<br><br>
+
+         🟢 Titik B <br>
+         📏 Jarak: ${r2.toFixed(2)} <br>
+         ⏱ Waktu: ${t2.toFixed(2)} detik (${m2.toFixed(2)} menit)<br><br>
+
+         🔵 Titik C <br>
+         📏 Jarak: ${r3.toFixed(2)} <br>
+         ⏱ Waktu: ${t3.toFixed(2)} detik (${m3.toFixed(2)} menit)`;
 
     // gambar
     gambarTitik(A, "red", "A");
