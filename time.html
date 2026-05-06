@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trilaterasi + Waktu</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #f0f2f5;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            margin: 20px auto;
+            width: 420px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        canvas {
+            border: 1px solid black;
+            background: #fafafa;
+        }
+
+        input {
+            padding: 5px;
+            margin: 5px;
+            width: 80px;
+        }
+
+        button {
+            padding: 8px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .hasil {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .waktu {
+            color: #555;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>📍 Trilaterasi + Waktu</h2>
+
+    <div class="waktu">🕒 Waktu Sekarang: <span id="jam"></span></div>
+
+    X: <input type="number" id="x" value="150">
+    Y: <input type="number" id="y" value="150">
+    <br>
+    <button onclick="hitung()">Hitung</button>
+
+    <div class="hasil" id="hasil"></div>
+    <div class="waktu" id="waktuKlik"></div>
+</div>
+
+<canvas id="canvas" width="400" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+// titik referensi
+const A = {x: 50, y: 80};
+const B = {x: 300, y: 100};
+const C = {x: 200, y: 300};
+
+// 🔹 JAM REAL-TIME
+function updateJam() {
+    let now = new Date();
+    document.getElementById("jam").innerHTML = now.toLocaleTimeString();
+}
+setInterval(updateJam, 1000);
+
+// 🔹 RUMUS JARAK
+function jarak(p1, p2) {
+    return Math.sqrt(
+        Math.pow(p1.x - p2.x, 2) +
+        Math.pow(p1.y - p2.y, 2)
+    );
+}
+
+// 🔹 GAMBAR
+function gambarTitik(p, warna, label) {
+    ctx.fillStyle = warna;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 6, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillText(label, p.x + 8, p.y);
+}
+
+function gambarLingkaran(p, r, warna) {
+    ctx.strokeStyle = warna;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, 2 * Math.PI);
+    ctx.stroke();
+}
+
+// 🔹 HITUNG
+function hitung() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let now = new Date(); // waktu saat klik
+    document.getElementById("waktuKlik").innerHTML =
+        "⏱ Perhitungan dilakukan pada: " + now.toLocaleString();
+
+    let x = parseFloat(document.getElementById("x").value);
+    let y = parseFloat(document.getElementById("y").value);
+
+    let P = {x: x, y: y};
+
+    let r1 = jarak(P, A);
+    let r2 = jarak(P, B);
+    let r3 = jarak(P, C);
+
+    document.getElementById("hasil").innerHTML =
+        `📏 r1 (ke A) = ${r1.toFixed(2)} <br>
+         📏 r2 (ke B) = ${r2.toFixed(2)} <br>
+         📏 r3 (ke C) = ${r3.toFixed(2)}`;
+
+    // gambar
+    gambarTitik(A, "red", "A");
+    gambarTitik(B, "green", "B");
+    gambarTitik(C, "blue", "C");
+
+    gambarLingkaran(A, r1, "red");
+    gambarLingkaran(B, r2, "green");
+    gambarLingkaran(C, r3, "blue");
+
+    gambarTitik(P, "black", "P");
+}
+</script>
+
+</body>
+</html>
