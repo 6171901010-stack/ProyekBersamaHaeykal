@@ -90,7 +90,7 @@ function jarak(p1, p2) {
     );
 }
 
-// 🔹 GAMBAR
+// 🔹 GAMBAR TITIK
 function gambarTitik(p, warna, label) {
     ctx.fillStyle = warna;
     ctx.beginPath();
@@ -99,6 +99,7 @@ function gambarTitik(p, warna, label) {
     ctx.fillText(label, p.x + 8, p.y);
 }
 
+// 🔹 GAMBAR LINGKARAN
 function gambarLingkaran(p, r, warna) {
     ctx.strokeStyle = warna;
     ctx.beginPath();
@@ -106,13 +107,16 @@ function gambarLingkaran(p, r, warna) {
     ctx.stroke();
 }
 
-// 🔹 HITUNG
+// 🔹 FUNGSI UTAMA
 function hitung() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    let now = new Date(); // waktu saat klik
+    // ⏱ mulai waktu
+    let start = performance.now();
+
+    let now = new Date();
     document.getElementById("waktuKlik").innerHTML =
-        "⏱ Perhitungan dilakukan pada: " + now.toLocaleString();
+        "⏰ Waktu perhitungan: " + now.toLocaleString();
 
     let x = parseFloat(document.getElementById("x").value);
     let y = parseFloat(document.getElementById("y").value);
@@ -123,10 +127,15 @@ function hitung() {
     let r2 = jarak(P, B);
     let r3 = jarak(P, C);
 
+    // ⏱ selesai waktu
+    let end = performance.now();
+    let durasi = (end - start) / 1000;
+
     document.getElementById("hasil").innerHTML =
         `📏 r1 (ke A) = ${r1.toFixed(2)} <br>
          📏 r2 (ke B) = ${r2.toFixed(2)} <br>
-         📏 r3 (ke C) = ${r3.toFixed(2)}`;
+         📏 r3 (ke C) = ${r3.toFixed(2)} <br><br>
+         ⏱ Waktu proses: ${durasi.toFixed(6)} detik`;
 
     // gambar
     gambarTitik(A, "red", "A");
