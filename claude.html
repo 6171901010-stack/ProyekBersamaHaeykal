@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPS 2D Sederhana</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f1a;
+    --surface: #131627;
+    --surface2: #1a1f35;
+    --border: #252d4a;
+    --accent: #4af7c4;
+    --accent2: #6e8cff;
+    --accent3: #ff6b9d;
+    --warn: #ffcc44;
+    --text: #e8eaf0;
+    --muted: #7a84a0;
+    --r1: #ff6b9d;
+    --r2: #6e8cff;
+    --r3: #ffcc44;
+    --grid: rgba(74,247,196,0.05);
+    --grid-line: rgba(74,247,196,0.08);
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 1.2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+  }
+
+  header .logo {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  header span {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .mode-btn {
+    padding: 0.6rem;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .mode-btn.active {
+    background: var(--surface2);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+
+  .section-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.6rem;
+  }
+
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .anchor-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .anchor-row {
+    display: grid;
+    grid-template-columns: 22px 1fr 1fr;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .anchor-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid;
+    flex-shrink: 0;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 1px; }
+  .field-label { font-size: 0.65rem; color: var(--muted); font-family: 'Space Mono', monospace; padding: 0 4px; }
+
+  input[type="number"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+    padding: 5px 8px;
+    outline: none;
+    transition: border-color .2s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus { border-color: var(--accent2); }
+
+  /* Mode panels */
+  .panel { display: none; flex-direction: column; gap: 1rem; }
+  .panel.active { display: flex; }
+
+  .pos-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .big-input-group { display: flex; flex-direction: column; gap: 4px; }
+  .big-input-group label { font-size: 0.72rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .big-input-group input { padding: 8px 10px; font-size: 0.9rem; }
+
+  .btn-run {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn-run:hover { opacity: 0.88; }
+  .btn-run:active { transform: scale(0.98); }
+  .btn-run.inverse { background: var(--accent2); color: #fff; }
+
+  /* Results */
+  .result-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+  }
+
+  .result-label { color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .result-val { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--text); }
+
+  .result-highlight {
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 0.85rem;
+    text-align: center;
+  }
+  .result-highlight .label { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+  .result-highlight .value { font-family: 'Space Mono', monospace; font-size: 1.1rem; color: var(--accent); font-weight: 700; }
+
+  .inv-results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    background: rgba(74,247,196,0.12);
+    color: var(--accent);
+  }
+  .tag.err { background: rgba(255,107,157,0.12); color: var(--r1); }
+  .tag.warn-tag { background: rgba(255,204,68,0.12); color: var(--warn); }
+
+  .info-box {
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    border-left: 3px solid var(--border);
+    line-height: 1.6;
+  }
+  .info-box.ok { border-color: var(--accent); color: var(--accent); }
+  .info-box.err { border-color: var(--r1); color: var(--r1); }
+  .info-box.warn { border-color: var(--warn); color: var(--warn); }
+
+  .dist-inputs { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .dist-row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Canvas area ── */
+  .canvas-area {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  #canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .canvas-hint {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    font-size: 0.68rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: 'Space Mono', monospace;
+    pointer-events: none;
+    line-height: 1.7;
+  }
+
+  .canvas-coords {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    pointer-events: none;
+  }
+
+  .zoom-controls {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .zoom-btn {
+    width: 32px; height: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .zoom-btn:hover { background: var(--surface2); color: var(--accent); }
+
+  .legend {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .legend-row { display: flex; align-items: center; gap: 7px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-line { width: 18px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .sidebar { max-height: 55vh; }
+    .canvas-area { min-height: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">📡</div>
+  <div>
+    <h1>GPS 2D Sederhana</h1>
+    <span>Sistem Penentuan Posisi Berbasis Trilaterasi</span>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- Mode Toggle -->
+    <div>
+      <div class="section-label">Mode</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-forward" onclick="setMode('forward')">📍 Posisi → Jarak</button>
+        <button class="mode-btn" id="btn-inverse" onclick="setMode('inverse')">📏 Jarak → Posisi</button>
+      </div>
+    </div>
+
+    <!-- Anchor Points Config -->
+    <div class="card">
+      <div class="section-label">Titik Referensi (Anchor)</div>
+      <div class="anchor-list" id="anchor-list">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <!-- ── FORWARD PANEL ── -->
+    <div class="panel active" id="panel-forward">
+      <div class="card">
+        <div class="section-label">Posisi yang Dicari Jaraknya</div>
+        <div class="pos-inputs">
+          <div class="big-input-group">
+            <label>X</label>
+            <input type="number" id="fwd-x" value="50" step="1" oninput="runForward()">
+          </div>
+          <div class="big-input-group">
+            <label>Y</label>
+            <input type="number" id="fwd-y" value="50" step="1" oninput="runForward()">
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="fwd-results">
+        <div class="section-label">Hasil Jarak ke Setiap Anchor</div>
+        <div style="font-size:0.78rem;color:var(--muted)">Masukkan koordinat untuk melihat jarak.</div>
+      </div>
+    </div>
+
+    <!-- ── INVERSE PANEL ── -->
+    <div class="panel" id="panel-inverse">
+      <div class="card">
+        <div class="section-label">Masukkan Jarak ke Setiap Anchor</div>
+        <div class="dist-inputs" id="dist-inputs">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <button class="btn-run inverse" onclick="runInverse()">Hitung Posisi</button>
+
+      <div class="card" id="inv-results">
+        <div class="section-label">Hasil Posisi</div>
+        <div style="font-size:0.78rem;color:var(--muted)">Masukkan jarak lalu tekan Hitung Posisi.</div>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="info-box">
+      Klik dan geser kanvas untuk menggeser tampilan. Scroll untuk zoom. Pada mode <strong>Posisi → Jarak</strong>, klik kanvas untuk memindahkan titik target.
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- Canvas -->
+  <div class="canvas-area">
+    <canvas id="canvas"></canvas>
+    <div class="canvas-coords" id="canvas-coords">x: — &nbsp; y: —</div>
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomBy(1.2)">＋</button>
+      <button class="zoom-btn" onclick="zoomBy(0.8)">－</button>
+      <button class="zoom-btn" onclick="resetView()" title="Reset tampilan">⌖</button>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="canvas-hint">Scroll: zoom · Drag: geser · <span id="hint-action">Klik: pindah titik target</span></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+const anchors = [
+  { id: 1, label: 'A1', x: 20,  y: 80,  color: '#ff6b9d' },
+  { id: 2, label: 'A2', x: 80,  y: 80,  color: '#6e8cff' },
+  { id: 3, label: 'A3', x: 50,  y: 20,  color: '#ffcc44' },
+];
+
+let mode = 'forward';
+let target = { x: 50, y: 50 };
+let invResult = null;
+
+// Canvas state
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let camX = 0, camY = 0, zoom = 1;
+let isDragging = false, dragStart = null, camStart = null;
+let isPanning = false;
+let lastMouse = { x: 0, y: 0 };
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+function init() {
+  buildAnchorList();
+  buildDistInputs();
+  buildLegend();
+  resetView();
+  runForward();
+  resizeCanvas();
+  window.addEventListener('resize', () => { resizeCanvas(); draw(); });
+}
+
+function resizeCanvas() {
+  const area = canvas.parentElement;
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight;
+  draw();
+}
+
+/* ═══════════════════════════════════════════════════════
+   UI BUILDERS
+═══════════════════════════════════════════════════════ */
+function buildAnchorList() {
+  const el = document.getElementById('anchor-list');
+  el.innerHTML = anchors.map(a => `
+    <div class="anchor-row">
+      <div class="anchor-dot" style="border-color:${a.color};background:${a.color}22"></div>
+      <div class="field-group">
+        <div class="field-label">X</div>
+        <input type="number" value="${a.x}" step="1"
+          oninput="anchors[${a.id-1}].x=+this.value; onAnchorChange()">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Y</div>
+        <input type="number" value="${a.y}" step="1"
+          oninput="anchors[${a.id-1}].y=+this.value; onAnchorChange()">
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildDistInputs() {
+  const el = document.getElementById('dist-inputs');
+  el.innerHTML = anchors.map(a => `
+    <div class="dist-row">
+      <div class="anchor-dot" style="border-color:${a.color};background:${a.color}22;width:14px;height:14px;border-radius:50%;border:2px solid;border-color:${a.color}"></div>
+      <div class="field-group">
+        <div class="field-label">${a.label} — jarak</div>
+        <input type="number" id="inv-d${a.id}" value="40" step="0.1" min="0" placeholder="jarak">
+      </div>
+      <span style="font-size:0.7rem;color:var(--muted);font-family:'Space Mono',monospace">unit</span>
+    </div>
+  `).join('');
+}
+
+function buildLegend() {
+  const el = document.getElementById('legend');
+  el.innerHTML = anchors.map(a => `
+    <div class="legend-row">
+      <div class="legend-dot" style="background:${a.color}"></div>
+      <span>Anchor ${a.label}</span>
+    </div>
+  `).join('') + `
+    <div class="legend-row">
+      <div class="legend-dot" style="background:#4af7c4"></div>
+      <span>Target / Posisi</span>
+    </div>
+    <div class="legend-row">
+      <div class="legend-line" style="background:#4af7c4;opacity:.4;border: 1px dashed #4af7c4"></div>
+      <span>Radius jarak</span>
+    </div>
+  `;
+}
+
+function onAnchorChange() {
+  buildDistInputs();
+  buildLegend();
+  if (mode === 'forward') runForward();
+  draw();
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODE
+═══════════════════════════════════════════════════════ */
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-forward').classList.toggle('active', m === 'forward');
+  document.getElementById('btn-inverse').classList.toggle('active', m === 'inverse');
+  document.getElementById('panel-forward').classList.toggle('active', m === 'forward');
+  document.getElementById('panel-inverse').classList.toggle('active', m === 'inverse');
+  document.getElementById('hint-action').textContent = m === 'forward' ? 'Klik: pindah titik target' : 'Klik: set jarak manual';
+  if (m === 'forward') runForward();
+  draw();
+}
+
+/* ═══════════════════════════════════════════════════════
+   MATH
+═══════════════════════════════════════════════════════ */
+function dist(a, b) {
+  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+}
+
+/* Trilaterasi 3 titik — least squares (Newton) */
+function trilaterate(a1, r1, a2, r2, a3, r3) {
+  // Solve linear system from pairs (a1,r1),(a2,r2) and (a1,r1),(a3,r3)
+  // (x-x1)^2 + (y-y1)^2 = r1^2
+  // Subtract eq1 from eq2 and eq3:
+  const A1 = 2*(a2.x - a1.x), B1 = 2*(a2.y - a1.y);
+  const C1 = r1*r1 - r2*r2 - a1.x*a1.x + a2.x*a2.x - a1.y*a1.y + a2.y*a2.y;
+  const A2 = 2*(a3.x - a1.x), B2 = 2*(a3.y - a1.y);
+  const C2 = r1*r1 - r3*r3 - a1.x*a1.x + a3.x*a3.x - a1.y*a1.y + a3.y*a3.y;
+
+  const det = A1*B2 - A2*B1;
+  if (Math.abs(det) < 1e-10) return null; // anchors collinear
+
+  const x = (C1*B2 - C2*B1) / det;
+  const y = (A1*C2 - A2*C1) / det;
+
+  // Compute residuals
+  const res1 = Math.abs(dist({x,y}, a1) - r1);
+  const res2 = Math.abs(dist({x,y}, a2) - r2);
+  const res3 = Math.abs(dist({x,y}, a3) - r3);
+  const maxRes = Math.max(res1, res2, res3);
+
+  return { x, y, residuals: [res1, res2, res3], maxRes };
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORWARD: posisi → jarak
+═══════════════════════════════════════════════════════ */
+function runForward() {
+  const x = parseFloat(document.getElementById('fwd-x').value);
+  const y = parseFloat(document.getElementById('fwd-y').value);
+  if (isNaN(x) || isNaN(y)) return;
+  target = { x, y };
+
+  const dists = anchors.map(a => ({ anchor: a, d: dist(target, a) }));
+  const el = document.getElementById('fwd-results');
+  el.innerHTML = `
+    <div class="section-label">Hasil Jarak ke Setiap Anchor</div>
+    ${dists.map(({ anchor: a, d }) => `
+      <div class="result-row">
+        <span class="result-label">
+          <div style="width:10px;height:10px;border-radius:50%;background:${a.color};flex-shrink:0"></div>
+          ${a.label} (${a.x}, ${a.y})
+        </span>
+        <span class="result-val">${d.toFixed(3)}</span>
+      </div>
+    `).join('')}
+    <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px">
+      <div class="result-row">
+        <span class="result-label">Posisi target</span>
+        <span class="result-val" style="color:var(--accent)">(${x.toFixed(2)}, ${y.toFixed(2)})</span>
+      </div>
+    </div>
+  `;
+  draw();
+}
+
+/* ═══════════════════════════════════════════════════════
+   INVERSE: jarak → posisi
+═══════════════════════════════════════════════════════ */
+function runInverse() {
+  const r1 = parseFloat(document.getElementById('inv-d1').value);
+  const r2 = parseFloat(document.getElementById('inv-d2').value);
+  const r3 = parseFloat(document.getElementById('inv-d3').value);
+
+  const el = document.getElementById('inv-results');
+
+  if ([r1, r2, r3].some(r => isNaN(r) || r < 0)) {
+    el.innerHTML = `<div class="section-label">Hasil Posisi</div>
+      <div class="info-box err">Masukkan nilai jarak yang valid (≥ 0).</div>`;
+    invResult = null; draw(); return;
+  }
+
+  const res = trilaterate(anchors[0], r1, anchors[1], r2, anchors[2], r3);
+
+  if (!res) {
+    el.innerHTML = `<div class="section-label">Hasil Posisi</div>
+      <div class="info-box err">Anchor segaris — tidak bisa dihitung.</div>`;
+    invResult = null; draw(); return;
+  }
+
+  invResult = res;
+  target = { x: res.x, y: res.y };
+
+  const quality = res.maxRes < 0.01 ? 'Tepat' : res.maxRes < 1 ? 'Baik' : res.maxRes < 5 ? 'Kurang Tepat' : 'Tidak Konsisten';
+  const qClass = res.maxRes < 0.01 ? 'ok' : res.maxRes < 1 ? 'warn-tag' : 'err';
+
+  el.innerHTML = `
+    <div class="section-label">Hasil Posisi <span class="tag ${qClass}">${quality}</span></div>
+    <div class="inv-results-grid">
+      <div class="result-highlight">
+        <div class="label">Posisi X</div>
+        <div class="value">${res.x.toFixed(4)}</div>
+      </div>
+      <div class="result-highlight">
+        <div class="label">Posisi Y</div>
+        <div class="value">${res.y.toFixed(4)}</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;display:flex;flex-direction:column;gap:6px">
+      <div class="section-label">Residual (selisih jarak)</div>
+      ${anchors.map((a, i) => `
+        <div class="result-row">
+          <span class="result-label">
+            <div style="width:10px;height:10px;border-radius:50%;background:${a.color}"></div>
+            Anchor ${a.label}
+          </span>
+          <span class="result-val" style="font-size:0.75rem;color:${res.residuals[i] < 0.01 ? 'var(--accent)' : res.residuals[i] < 1 ? 'var(--warn)' : 'var(--r1)'}">${res.residuals[i].toFixed(4)}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div class="info-box ${res.maxRes < 0.01 ? 'ok' : res.maxRes < 5 ? 'warn' : 'err'}">
+      ${res.maxRes < 0.01
+        ? '✓ Tiga lingkaran bertemu sempurna di satu titik.'
+        : res.maxRes < 5
+          ? '⚠ Ada sedikit inkonsistensi antar jarak — solusi adalah titik terbaik.'
+          : '✗ Jarak-jarak tidak konsisten. Periksa kembali nilai input.'}
+    </div>
+  `;
+  draw();
+}
+
+/* ═══════════════════════════════════════════════════════
+   CANVAS DRAWING
+═══════════════════════════════════════════════════════ */
+function worldToScreen(wx, wy) {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  return {
+    x: cx + (wx - camX) * zoom,
+    y: cy - (wy - camY) * zoom  // Y flip
+  };
+}
+
+function screenToWorld(sx, sy) {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  return {
+    x: (sx - cx) / zoom + camX,
+    y: -(sy - cy) / zoom + camY
+  };
+}
+
+function draw() {
+  if (!canvas.width) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+  drawAxes();
+
+  const showCircles = (mode === 'forward') || (mode === 'inverse' && invResult !== null);
+
+  if (showCircles) {
+    // Draw distance circles
+    anchors.forEach((a, i) => {
+      let r = 0;
+      if (mode === 'forward') {
+        r = dist(target, a);
+      } else {
+        r = [
+          parseFloat(document.getElementById('inv-d1').value),
+          parseFloat(document.getElementById('inv-d2').value),
+          parseFloat(document.getElementById('inv-d3').value),
+        ][i];
+        if (isNaN(r) || r < 0) return;
+      }
+      const sc = worldToScreen(a.x, a.y);
+      const rPx = r * zoom;
+      ctx.beginPath();
+      ctx.arc(sc.x, sc.y, rPx, 0, Math.PI * 2);
+      ctx.strokeStyle = a.color + '55';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Fill very light
+      ctx.fillStyle = a.color + '0a';
+      ctx.fill();
+    });
+  }
+
+  // Draw connection lines (forward mode)
+  if (mode === 'forward') {
+    anchors.forEach(a => {
+      const sc = worldToScreen(a.x, a.y);
+      const tc = worldToScreen(target.x, target.y);
+      ctx.beginPath();
+      ctx.moveTo(sc.x, sc.y);
+      ctx.lineTo(tc.x, tc.y);
+      ctx.strokeStyle = a.color + '44';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Distance label on line
+      const mid = { x: (sc.x + tc.x) / 2, y: (sc.y + tc.y) / 2 };
+      const d = dist(target, a);
+      ctx.fillStyle = a.color + 'cc';
+      ctx.font = '500 11px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(d.toFixed(1), mid.x, mid.y - 5);
+    });
+  }
+
+  // Draw anchors
+  anchors.forEach(a => {
+    const sc = worldToScreen(a.x, a.y);
+    // Glow
+    ctx.beginPath();
+    ctx.arc(sc.x, sc.y, 14, 0, Math.PI * 2);
+    ctx.fillStyle = a.color + '22';
+    ctx.fill();
+    // Dot
+    ctx.beginPath();
+    ctx.arc(sc.x, sc.y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = a.color;
+    ctx.fill();
+    ctx.strokeStyle = '#0d0f1a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Label
+    ctx.fillStyle = a.color;
+    ctx.font = '700 12px "Syne", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(a.label, sc.x, sc.y - 14);
+    ctx.fillStyle = '#7a84a0';
+    ctx.font = '400 10px "Space Mono", monospace';
+    ctx.fillText(`(${a.x}, ${a.y})`, sc.x, sc.y + 20);
+  });
+
+  // Draw target point
+  const tc = worldToScreen(target.x, target.y);
+  // Pulse ring
+  ctx.beginPath();
+  ctx.arc(tc.x, tc.y, 18, 0, Math.PI * 2);
+  ctx.strokeStyle = '#4af7c422';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Dot
+  ctx.beginPath();
+  ctx.arc(tc.x, tc.y, 7, 0, Math.PI * 2);
+  ctx.fillStyle = '#4af7c4';
+  ctx.fill();
+  ctx.strokeStyle = '#0d0f1a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Cross hair
+  ctx.strokeStyle = '#4af7c4';
+  ctx.lineWidth = 1;
+  const ch = 12;
+  ctx.beginPath(); ctx.moveTo(tc.x - ch, tc.y); ctx.lineTo(tc.x + ch, tc.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tc.x, tc.y - ch); ctx.lineTo(tc.x, tc.y + ch); ctx.stroke();
+  // Label
+  ctx.fillStyle = '#4af7c4';
+  ctx.font = '700 12px "Syne", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(mode === 'forward' ? 'Target' : 'Posisi', tc.x, tc.y - 14);
+  ctx.fillStyle = '#4af7c4bb';
+  ctx.font = '400 10px "Space Mono", monospace';
+  ctx.fillText(`(${target.x.toFixed(2)}, ${target.y.toFixed(2)})`, tc.x, tc.y + 20);
+}
+
+function drawGrid() {
+  const step = gridStep();
+  const w = canvas.width, h = canvas.height;
+  const tl = screenToWorld(0, 0);
+  const br = screenToWorld(w, h);
+
+  const startX = Math.floor(Math.min(tl.x, br.x) / step) * step;
+  const endX   = Math.ceil(Math.max(tl.x, br.x) / step) * step;
+  const startY = Math.floor(Math.min(tl.y, br.y) / step) * step;
+  const endY   = Math.ceil(Math.max(tl.y, br.y) / step) * step;
+
+  ctx.strokeStyle = 'rgba(74,247,196,0.06)';
+  ctx.lineWidth = 1;
+
+  for (let x = startX; x <= endX; x += step) {
+    const sc = worldToScreen(x, 0);
+    ctx.beginPath(); ctx.moveTo(sc.x, 0); ctx.lineTo(sc.x, h); ctx.stroke();
+  }
+  for (let y = startY; y <= endY; y += step) {
+    const sc = worldToScreen(0, y);
+    ctx.beginPath(); ctx.moveTo(0, sc.y); ctx.lineTo(w, sc.y); ctx.stroke();
+  }
+
+  // Grid labels
+  ctx.fillStyle = 'rgba(122,132,160,0.5)';
+  ctx.font = '10px "Space Mono", monospace';
+  ctx.textAlign = 'left';
+  for (let x = startX; x <= endX; x += step) {
+    const sc = worldToScreen(x, 0);
+    if (Math.abs(x) > 0.01) ctx.fillText(x, sc.x + 2, canvas.height / 2 + 12);
+  }
+  ctx.textAlign = 'right';
+  for (let y = startY; y <= endY; y += step) {
+    const sc = worldToScreen(0, y);
+    if (Math.abs(y) > 0.01) ctx.fillText(y, canvas.width / 2 - 3, sc.y - 3);
+  }
+}
+
+function drawAxes() {
+  const w = canvas.width, h = canvas.height;
+  const cx = worldToScreen(0, 0);
+  ctx.strokeStyle = 'rgba(74,247,196,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, cx.y); ctx.lineTo(w, cx.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx.x, 0); ctx.lineTo(cx.x, h); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(74,247,196,0.4)';
+  ctx.font = '600 11px "Space Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('X →', w - 35, cx.y - 5);
+  ctx.textAlign = 'center';
+  ctx.fillText('Y ↑', cx.x + 20, 14);
+}
+
+function gridStep() {
+  const worldW = canvas.width / zoom;
+  const rawStep = worldW / 10;
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const norm = rawStep / mag;
+  if (norm < 2) return mag;
+  if (norm < 5) return 2 * mag;
+  return 5 * mag;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CAMERA / VIEW
+═══════════════════════════════════════════════════════ */
+function resetView() {
+  const allX = [...anchors.map(a => a.x), target.x];
+  const allY = [...anchors.map(a => a.y), target.y];
+  const minX = Math.min(...allX), maxX = Math.max(...allX);
+  const minY = Math.min(...allY), maxY = Math.max(...allY);
+  camX = (minX + maxX) / 2;
+  camY = (minY + maxY) / 2;
+  const rangeX = maxX - minX || 100;
+  const rangeY = maxY - minY || 100;
+  zoom = Math.min(canvas.width / (rangeX * 2.5), canvas.height / (rangeY * 2.5));
+  draw();
+}
+
+function zoomBy(factor) {
+  zoom *= factor;
+  zoom = Math.max(0.5, Math.min(50, zoom));
+  draw();
+}
+
+/* ═══════════════════════════════════════════════════════
+   CANVAS EVENTS
+═══════════════════════════════════════════════════════ */
+canvas.addEventListener('mousedown', e => {
+  isDragging = false;
+  isPanning = true;
+  dragStart = { x: e.clientX, y: e.clientY };
+  camStart = { x: camX, y: camY };
+});
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const wx = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+  document.getElementById('canvas-coords').textContent = `x: ${wx.x.toFixed(2)}   y: ${wx.y.toFixed(2)}`;
+
+  if (isPanning && dragStart) {
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) isDragging = true;
+    camX = camStart.x - dx / zoom;
+    camY = camStart.y + dy / zoom;
+    draw();
+  }
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (!isDragging && mode === 'forward') {
+    const rect = canvas.getBoundingClientRect();
+    const w = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+    target = w;
+    document.getElementById('fwd-x').value = w.x.toFixed(2);
+    document.getElementById('fwd-y').value = w.y.toFixed(2);
+    runForward();
+  }
+  isPanning = false;
+  isDragging = false;
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.12 : 0.89;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const wx = screenToWorld(mx, my);
+  zoom *= factor;
+  zoom = Math.max(0.5, Math.min(50, zoom));
+  // Zoom toward mouse position
+  camX = wx.x - (mx - canvas.width/2) / zoom;
+  camY = wx.y + (my - canvas.height/2) / zoom;
+  draw();
+}, { passive: false });
+
+canvas.addEventListener('mouseleave', () => {
+  isPanning = false;
+  document.getElementById('canvas-coords').textContent = 'x: —   y: —';
+});
+
+/* Touch support */
+let lastTouchDist = null;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    isPanning = true;
+    isDragging = false;
+    const t = e.touches[0];
+    dragStart = { x: t.clientX, y: t.clientY };
+    camStart = { x: camX, y: camY };
+  }
+  if (e.touches.length === 2) {
+    lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && isPanning) {
+    const t = e.touches[0];
+    const dx = t.clientX - dragStart.x;
+    const dy = t.clientY - dragStart.y;
+    if (Math.abs(dx) + Math.abs(dy) > 5) isDragging = true;
+    camX = camStart.x - dx / zoom;
+    camY = camStart.y + dy / zoom;
+    draw();
+  }
+  if (e.touches.length === 2 && lastTouchDist) {
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    zoom *= d / lastTouchDist;
+    zoom = Math.max(0.5, Math.min(50, zoom));
+    lastTouchDist = d;
+    draw();
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  if (!isDragging && e.touches.length === 0 && mode === 'forward') {
+    const t = e.changedTouches[0];
+    const rect = canvas.getBoundingClientRect();
+    const w = screenToWorld(t.clientX - rect.left, t.clientY - rect.top);
+    target = w;
+    document.getElementById('fwd-x').value = w.x.toFixed(2);
+    document.getElementById('fwd-y').value = w.y.toFixed(2);
+    runForward();
+  }
+  isPanning = false;
+  lastTouchDist = null;
+});
+
+/* ═══════════════════════════════════════════════════════
+   START
+═══════════════════════════════════════════════════════ */
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
